@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Project - Air Pollution</title>
+        <link rel="stylesheet" href="src/leaflet.css">
+        <link rel="stylesheet" href="src/css/bootstrap.css">
+        
+        <link rel="stylesheet" href="src/plugins/L.Control.MousePosition.css">
+        <link rel="stylesheet" href="src/plugins/L.Control.Sidebar.css">
+        <link rel="stylesheet" href="src/plugins/Leaflet.PolylineMeasure.css">
+        <link rel="stylesheet" href="src/plugins/easy-button.css">
+        <link rel="stylesheet" href="src/plugins/leaflet-styleeditor/css/Leaflet.StyleEditor.css">
+        <link rel="stylesheet" href="src/css/font-awesome.min.css">
+        <link rel="stylesheet" href="src/plugins/leaflet.awesome-markers.css">
+        <link rel="stylesheet" href="src/plugins/leaflet-mapkey/MapkeyIcons.css">
+        <link rel="stylesheet" href="src/plugins/leaflet-mapkey/L.Icon.Mapkey.css">
+        <link rel="stylesheet" href="src/plugins/MarkerCluster.css">
+        <link rel="stylesheet" href="src/plugins/MarkerCluster.Default.css">
+        <link rel="stylesheet" href="src/jquery-ui.min.css">
+        <link rel="stylesheet" href="src/plugins/leaflet-legend.css">
+        
+        <script src="src/leaflet-src.js"></script>
+        <script src="src/jquery-3.2.0.min.js"></script>
+        <script src="src/plugins/L.Control.MousePosition.js"></script>
+        <script src="src/plugins/L.Control.Sidebar.js"></script>
+        <script src="src/plugins/Leaflet.PolylineMeasure.js"></script>
+        <script src="src/plugins/easy-button.js"></script>
+        <script src="src/plugins/leaflet-providers.js"></script>
+        <script src="src/plugins/leaflet-styleeditor/javascript/Leaflet.StyleEditor.js"></script>
+        <script src="src/plugins/leaflet-styleeditor/javascript/Leaflet.StyleForms.js"></script>
+        <script src="src/plugins/leaflet.ajax.min.js"></script>
+        <script src="src/plugins/leaflet.sprite.js"></script>
+        <script src="src/plugins/leaflet.awesome-markers.min.js"></script>
+        <script src="src/plugins/leaflet-mapkey/L.Icon.Mapkey.js"></script>
+        <script src="src/plugins/leaflet.markercluster.js"></script>
+        <script src="src/plugins/leaflet.geometryutil.js"></script>
+        <script src="src/jquery-ui.min.js"></script>
+        <script src="src/turf.min.js"></script>
+        <script src="src/plugins/leaflet-legend.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@turf/turf@5/turf.min.js"></script>
+        <script src=https://cdnjs.cloudflare.com/ajax/libs/mathjs/5.1.1/math.js></script>
+        
+        <style>
+            #header{
+                height:80px;
+                background-color:darkgoldenrod;
+            }
+            #mapdiv{
+                height:740px;
+                background-color:salmon;
+            }
+            #side_panel{
+                height:740px;
+                background-color:beige;
+            }
+            #footer{
+                height: 60px;
+                background-color:darkgrey;
+                text-align:center;
+            }
+            #afterfooter{
+                height: 50px;
+                background-color:rgba(255, 99, 71, 0.5);
+                text-align:start;
+                
+            }   
+        </style>
+    </head>
+    <body>
+        <div id="header" class="col-md-12">
+            
+            <h1 class="text-center">Real time air pollution, Bangalore</h1>
+        </div>
+        <div id="side_panel" class="col-md-3">
+            <h1 class="text-center">Air Pollution GIS</h1>
+            
+            
+            <div id="divFilterProject" class="col-xs-12">
+                <div id="filter" class="col-xs-12">
+                    <input type='checkbox' name='fltProject' value='station' checked><b> Weather Stations around Bangalore</b><br><br>
+                    <input type='checkbox' name='fltProject' value='wards' checked><b> Ward Map of Bangalore</b><br><br>
+                    
+                </div><br><br><br>
+                <div>
+                    <button id="btnProjectFilterAll" class="btn btn-primary btn-block">Check All</button>
+                    <button id="btnProjectFilterNone" class="btn btn-primary btn-block">Uncheck All</button><br>    
+                </div>
+                <div>
+                    <h3 class="text-center">Interpolate Parameters</h3>
+                    <button id="btnInterPm" class="btn btn-primary btn-block">Interpolate PM2.5</button>
+                    <button id="btnInterTemp" class="btn btn-primary btn-block">Interpolate Temperature</button>
+                    <button id="btnInterHumd" class="btn btn-primary btn-block">Interpolate Humidity</button>
+                    <button id="btnInterDel" class="btn btn-primary btn-block">Remove any Interpolation</button>
+                </div>
+                
+                            
+                <div id="legend1">
+                    <h4 id="l1">Current State of PM2.5 (µg/m³)</h4>
+                    <svg height="200" width="100%">
+                        <rect x="10" y="5" width="30" height="20" style="stroke-width:2; stroke:violet; fill:violet; fill-opacity:1;"/>
+                        <text x="50" y="20" style="font-family:sans-serif; font-size:16px;">0 - 30 (Good)</text>
+                        <rect x="10" y="35" width="30" height="20" style="stroke-width:2; stroke:blue; fill:blue; fill-opacity:1;"/>
+                        <text x="50" y="50" style="font-family:sans-serif; font-size:16px;">30 - 60 (Satisfactory)</text>
+                        <rect x="10" y="65" width="30" height="20" style="stroke-width:2; stroke:green; fill:green; fill-opacity:1;"/>
+                        <text x="50" y="80" style="font-family:sans-serif; font-size:16px;">60 - 90 (Moderate)</text>
+                        <rect x="10" y="95" width="30" height="20" style="stroke-width:2; stroke:yellow; fill:yellow; fill-opacity:1;"/>
+                        <text x="50" y="110" style="font-family:sans-serif; font-size:16px;">90 - 120 (Poor)</text>
+                        <rect x="10" y="125" width="30" height="20" style="stroke-width:2; stroke:orange; fill:orange; fill-opacity:1;"/>
+                        <text x="50" y="140" style="font-family:sans-serif; font-size:16px;">120 - 250 (Very Poor)</text>
+                        <rect x="10" y="155" width="30" height="20" style="stroke-width:2; stroke:red; fill:red; fill-opacity:1;"/>
+                        <text x="50" y="170" style="font-family:sans-serif; font-size:16px;">> 250 (Severe)</text>  
+                    </svg>
+                </div>
+                <div id="legend2">
+                    <h4 id="l2">Current State of Temperature (°C)</h4>
+                    <svg height="200" width="100%">
+                        <rect x="10" y="5" width="30" height="20" style="stroke-width:2; stroke:violet; fill:violet; fill-opacity:1;"/>
+                        <text x="50" y="20" style="font-family:sans-serif; font-size:16px;">0 - 10 (Very Cold)</text>
+                        <rect x="10" y="35" width="30" height="20" style="stroke-width:2; stroke:blue; fill:blue; fill-opacity:1;"/>
+                        <text x="50" y="50" style="font-family:sans-serif; font-size:16px;">10 - 20 (Cold)</text>
+                        <rect x="10" y="65" width="30" height="20" style="stroke-width:2; stroke:green; fill:green; fill-opacity:1;"/>
+                        <text x="50" y="80" style="font-family:sans-serif; font-size:16px;">20 - 30 (Moderate)</text>
+                        <rect x="10" y="95" width="30" height="20" style="stroke-width:2; stroke:yellow; fill:yellow; fill-opacity:1;"/>
+                        <text x="50" y="110" style="font-family:sans-serif; font-size:16px;">30 - 40 (Hot)</text>
+                        <rect x="10" y="125" width="30" height="20" style="stroke-width:2; stroke:orange; fill:orange; fill-opacity:1;"/>
+                        <text x="50" y="140" style="font-family:sans-serif; font-size:16px;">40 - 50 (Very Hot)</text>
+                        <rect x="10" y="155" width="30" height="20" style="stroke-width:2; stroke:red; fill:red; fill-opacity:1;"/>
+                        <text x="50" y="170" style="font-family:sans-serif; font-size:16px;">> 50 (Severe)</text>
+                    </svg>  
+                </div>
+                <div id="legend3">
+                    <h4 id="l3">Current State of Humidity (%)</h4>
+                    <svg height="200" width="100%">
+                        <rect x="10" y="5" width="30" height="20" style="stroke-width:2; stroke:violet; fill:violet; fill-opacity:1;"/>
+                        <text x="50" y="20" style="font-family:sans-serif; font-size:16px;">0 - 20 </text>
+                        <rect x="10" y="35" width="30" height="20" style="stroke-width:2; stroke:blue; fill:blue; fill-opacity:1;"/>
+                        <text x="50" y="50" style="font-family:sans-serif; font-size:16px;">20 - 40 </text>
+                        <rect x="10" y="65" width="30" height="20" style="stroke-width:2; stroke:green; fill:green; fill-opacity:1;"/>
+                        <text x="50" y="80" style="font-family:sans-serif; font-size:16px;">40 - 60 </text>
+                        <rect x="10" y="95" width="30" height="20" style="stroke-width:2; stroke:yellow; fill:yellow; fill-opacity:1;"/>
+                        <text x="50" y="110" style="font-family:sans-serif; font-size:16px;">60 - 80 </text>
+                        <rect x="10" y="125" width="30" height="20" style="stroke-width:2; stroke:orange; fill:orange; fill-opacity:1;"/>
+                        <text x="50" y="140" style="font-family:sans-serif; font-size:16px;">80 - 100 </text>
+                    </svg>
+                    
+                </div>
+            
+            </div>
+            
+            
+            <div id="zoomButtons"></div>          
+        </div>
+        
+        <div id="mapdiv" class="col-md-9"></div>
+        <div id="footer" class="col-md-12">
+            <h4 id="map-coords" class="text-center">Latitude: 12.98 Longitude: 77.58 Zoom Level: 12</h4>
+            
+            <h5> This work was impossible without data sources from <a href="https://www.purpleair.com/data.json">Purpleair.com</a>. </h5>
+        </div>
+        
+        <div id="afterfooter" class="col-md-12" style="color:darkviolet">        
+            
+            <h5><b>For any queries and feedback, kindly drop a mail at <u>gauravrajson@gmail.com</u></b></h5>
+                
+        </div>
+        
+        
+        
+        <script>
+            var mymap = L.map('mapdiv',{minZoom: 11});
+            mymap.setView([12.98, 77.58], 12);
+            mymap.dragging.disable();
+            
+            var backgroundLayer = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png');
+            mymap.addLayer(backgroundLayer);
+            
+             mymap.on('mousemove',function(e){
+                var str = "Latitude: "+e.latlng.lat.toFixed(5)+"Longitude: "+e.latlng.lng.toFixed(5)+"Zoom level: "+mymap.getZoom();
+                $("#map-coords").html(str);
+            });
+            
+            var lyrsensors;
+            var jsnlyrsensors;
+            var lyrBangaloreWards;
+            var lyrInterPm;
+            var lyrInterTemp;
+            var lyrInterHumd;
+            var lyrMask;
+            var mrkCurrentLocation;
+            var ctlEasybutton;
+
+            $("#legend1").hide();
+            $("#legend2").hide();
+            $("#legend3").hide();
+            refreshBangalore();
+ 
+            ctlEasybutton = L.easyButton('glyphicon-record', function(){
+                mymap.locate(); 
+            }).addTo(mymap);    
+                       
+            function refreshBangalore(){
+                if(lyrsensors){
+                    mymap.removeLayer(lyrsensors);
+                }
+                if(lyrBangaloreWards){
+                    mymap.removeLayer(lyrBangaloreWards);
+                }
+
+                var lyr = $("input[name=fltProject]:checked");
+                for (var i=0; i<lyr.length; i++){
+                    if (lyr[i].value=='station'){
+                        $.getJSON('https://www.purpleair.com/data.json', function(data) {
+                            //data is the JSON string
+                                jsnlyrsensors = data;
+
+                                $.getJSON('data/sensors_updated3.geojson', function(data) {
+                                //data is the JSON string
+                                    gjsnlyrsensors = data; 
+                                    
+                                    for (var i=0;i<gjsnlyrsensors.features.length;i++){
+                                        for (var j=0; j<jsnlyrsensors.data.length; j++){
+                                            if (gjsnlyrsensors.features[i].properties.sensor_id == jsnlyrsensors.data[j][0]){
+                                                gjsnlyrsensors.features[i].properties.PM_ATM = jsnlyrsensors.data[j][3];
+                                                gjsnlyrsensors.features[i].properties.Temperature = ((jsnlyrsensors.data[j][22]-32)*(5/9)).toFixed(2);
+                                                gjsnlyrsensors.features[i].properties.Humidity = jsnlyrsensors.data[j][21];    
+                                            }
+                                           
+                                        }    
+                                    }
+                                    for (var i=0;i<gjsnlyrsensors.features.length;i++){
+                                        
+                                        if (gjsnlyrsensors.features[i].properties.PM_ATM == undefined){
+                                            gjsnlyrsensors.features[i].properties.PM_ATM = 0;
+                                            gjsnlyrsensors.features[i].properties.Temperature = 0;
+                                            gjsnlyrsensors.features[i].properties.Humidity = 0;    
+                                        }
+                                           
+                                       
+                                    }
+                                    console.log(jsnlyrsensors.data.length);
+                                    console.log(gjsnlyrsensors.features.length);
+                                    
+
+                                    lyrsensors = L.geoJSON(gjsnlyrsensors, {filter: function(feature, layer){return feature.properties.PM_ATM != 0;}, pointToLayer: function(feature, latlng){
+                                        var strPopup = "<h4>Sensor ID: "+feature.properties.sensor_id+"</h4>PM2.5(µg/m³): "+feature.properties.PM_ATM+"<br>Temperature(°C): "+feature.properties.Temperature+"<br>Humidity(%): "+feature.properties.Humidity;
+                                        return L.circleMarker(latlng, {radius:4, color:'black', fillColor:'black', fillOpacity:1}).bindTooltip(strPopup);
+                                    }}).addTo(mymap);
+                                  
+                                    mymap.fitBounds(lyrsensors.getBounds());   
+                                });   
+                            });
+                    }
+
+                    
+                    if (lyr[i].value=='wards'){
+                        lyrBangaloreWards = L.geoJSON.ajax('data/Bangalore.geojson', {style:styleWards, onEachFeature:processWards}).addTo(mymap);
+//                        mymap.fitBounds(lyrBangaloreWards.getBounds());
+                    }
+                }
+                    
+                
+             }
+            
+            mymap.on('locationfound', function(e) {
+                console.log(e);
+                if (mrkCurrentLocation) {
+                    mrkCurrentLocation.remove();
+                }
+                mrkCurrentLocation = L.circle(e.latlng, {radius:e.accuracy/2}).addTo(mymap);
+                mymap.setView(e.latlng, 14);
+            });
+                
+            mymap.on('locationerror', function(e) {
+                console.log(e);
+                alert("Location was not found");
+            });
+            
+   
+            $("#filter").change(function(){
+                refreshBangalore(); 
+            });
+            
+                                
+            $("#btnProjectFilterAll").click(function(){
+                $("input[name=fltProject]").prop('checked', true);
+                refreshBangalore();   
+            });
+            
+            $("#btnProjectFilterNone").click(function(){
+                $("input[name=fltProject]").prop('checked', false);
+                if(lyrsensors){
+                    mymap.removeLayer(lyrsensors);
+                }
+                if(lyrBangaloreWards){
+                    mymap.removeLayer(lyrBangaloreWards);
+                }
+                refreshBangalore();
+            });
+            
+
+            
+//            function processStation(json, lyr){
+//                var att = json.properties;
+//                
+//                lyr.bindTooltip("<h4>Sensor ID: "+att.sensor_id+"</h4>PM2.5(µg/m³): "+att.PM_ATM+"<br>Temperature(°C): "+att.Temperature+"<br>Humidity(%): "+att.Humidity);
+//            }
+            
+            function processWards(json, lyr){
+                var att = json.properties;
+                lyr.bindTooltip("<h4>Ward No.: "+att.WARD_NO+"</h4><b>Ward Name: "+att.WARD_NAME+"</b><br>Population: "+att.POP_TOTAL+"<br>Area_KM_SQ: "+att.AREA_SQ_KM);
+            }
+            
+            function styleWards(json) {
+                var att = json.properties.WARD_NO;
+                return {color:'black', weight:2,fillColor:'white',fillOpacity:0};    
+            }
+            
+            function styleStations(json) {
+                var att = json.properties.sensor_id;
+                return L.circleMarker(latlng, {radius:4, color:'black', fillColor:'black', fillOpacity:1});
+//                return {color:'black', weight:2,fillColor:'white',fillOpacity:0};    
+            }
+            
+            $("#btnInterPm").click(function(){
+                if(lyrInterPm){
+                    mymap.removeLayer(lyrInterPm);
+                    $("#legend1").hide();
+                }
+                if(lyrInterTemp){
+                    mymap.removeLayer(lyrInterTemp);
+                    $("#legend2").hide();
+                }
+                if(lyrInterHumd){
+                    mymap.removeLayer(lyrInterHumd);
+                    $("#legend3").hide();
+                }
+                if(lyrMask){
+                    mymap.removeLayer(lyrMask);
+                }
+                jsnlyrsensorss = lyrsensors.toGeoJSON();
+                console.log(jsnlyrsensorss);
+                jsnInterPm = turf.interpolate(jsnlyrsensorss,0.5,{gridType:'hex',property:'PM_ATM', units:'kilometers'}); 
+                lyrInterPm = L.geoJSON(jsnInterPm, {style:stylePm,onEachFeature:processGridP}).addTo(mymap);
+                lyrMask = L.geoJSON.ajax('data/Maskk.geojson', {style:styleMask}).addTo(mymap);
+                $("#legend1").show();
+                $("#legend2").hide();
+                $("#legend3").hide();
+            });
+             
+            function processGridP(json, lyr) {
+                // Add popup with ID to grid layer
+                lyr.bindTooltip("PM2.5: "+json.properties.PM_ATM.toFixed(2));
+            }
+                             
+           function stylePm(json) {
+                var att = json.properties.PM_ATM;
+                switch (true) {
+                    case ((att>0) && (att<=30)):
+                        return {color:'violet',weight:0.5,fillColor:'violet',fillOpacity:0.5};
+                        break;
+                    case ((att>30) && (att<=60)):
+                        return {color:'blue',weight:0.5,fillColor:'blue',fillOpacity:0.5};
+                        break;
+                    case ((att>60) && (att<=90)):
+                        return {color:'green',weight:0.5,fillColor:'green',fillOpacity:0.5};
+                        break;
+                    case ((att>90) && (att<=120)):
+                        return {color:'yellow',weight:0.5,fillColor:'yellow',fillOpacity:0.5};
+                        break
+                    case ((att>121) && (att<=250)):
+                        return {color:'orange',weight:0.5,fillColor:'orange',fillOpacity:0.5};
+                        break;
+                    default:
+                        return {color:'red',weight:0.5}
+                }
+            } 
+            
+            $("#btnInterTemp").click(function(){
+                if(lyrInterPm){
+                    mymap.removeLayer(lyrInterPm);
+                    $("#legend1").hide();
+                }
+                if(lyrInterTemp){
+                    mymap.removeLayer(lyrInterTemp);
+                    $("#legend2").hide();
+                }
+                if(lyrInterHumd){
+                    mymap.removeLayer(lyrInterHumd);
+                    $("#legend3").hide();
+                }
+                if(lyrMask){
+                    mymap.removeLayer(lyrMask);
+                }
+
+                jsnlyrsensorss = lyrsensors.toGeoJSON();
+                console.log(jsnlyrsensorss);
+                jsnInterTemp = turf.interpolate(jsnlyrsensorss,0.5,{gridType:'hex',property:'Temperature', units:'kilometers'}); 
+                lyrInterTemp = L.geoJSON(jsnInterTemp, {style:styleTemp,onEachFeature:processGridT}).addTo(mymap);
+                lyrMask = L.geoJSON.ajax('data/Maskk.geojson', {style:styleMask}).addTo(mymap);
+                $("#legend1").hide();
+                $("#legend2").show();
+                $("#legend3").hide();
+            });
+             
+            function processGridT(json, lyr) {
+                // Add popup with ID to grid layer
+                lyr.bindTooltip("Temp: "+json.properties.Temperature.toFixed(2));
+            }
+                             
+           function styleTemp(json) {
+                var att = json.properties.Temperature;
+                switch (true) {
+                    case ((att>0) && (att<=10)):
+                        return {color:'violet',weight:0.5,fillColor:'violet',fillOpacity:0.5};
+                        break;
+                    case ((att>10) && (att<=20)):
+                        return {color:'blue',weight:0.5,fillColor:'blue',fillOpacity:0.5};
+                        break;
+                    case ((att>20) && (att<=30)):
+                        return {color:'green',weight:0.5,fillColor:'green',fillOpacity:0.5};
+                        break;
+                    case ((att>30) && (att<=40)):
+                        return {color:'yellow',weight:0.5,fillColor:'yellow',fillOpacity:0.5};
+                        break
+                    case ((att>40) && (att<=50)):
+                        return {color:'orange',weight:0.5,fillColor:'orange',fillOpacity:0.5};
+                        break;
+                    default:
+                        return {color:'red',weight:0.5}
+                }
+            } 
+            
+           
+           $("#btnInterHumd").click(function(){
+               if(lyrInterPm){
+                    mymap.removeLayer(lyrInterPm);
+                    $("#legend1").hide();
+                }
+                if(lyrInterTemp){
+                    mymap.removeLayer(lyrInterTemp);
+                    $("#legend2").hide();
+                }
+                if(lyrInterHumd){
+                    mymap.removeLayer(lyrInterHumd);
+                    $("#legend3").hide();
+                }
+               if(lyrMask){
+                    mymap.removeLayer(lyrMask);
+                }
+               
+                jsnlyrsensorss = lyrsensors.toGeoJSON();
+                console.log(jsnlyrsensorss);
+                jsnInterHumd = turf.interpolate(jsnlyrsensorss,0.5,{gridType:'hex',property:'Humidity', units:'kilometers'}); 
+                lyrInterHumd = L.geoJSON(jsnInterHumd, {style:styleHumd,onEachFeature:processGridH}).addTo(mymap);
+                lyrMask = L.geoJSON.ajax('data/Maskk.geojson', {style:styleMask}).addTo(mymap);
+                $("#legend1").hide();
+                $("#legend2").hide();
+                $("#legend3").show();
+            });
+             
+            function processGridH(json, lyr) {
+                // Add popup with ID to grid layer
+                lyr.bindTooltip("Humidity: "+json.properties.Humidity.toFixed(2));
+            }
+                             
+           function styleHumd(json) {
+                var att = json.properties.Humidity;
+                switch (true) {
+                    case ((att>0) && (att<=20)):
+                        return {color:'violet',weight:0.5,fillColor:'violet',fillOpacity:0.5};
+                        break;
+                    case ((att>20) && (att<=40)):
+                        return {color:'blue',weight:0.5,fillColor:'blue',fillOpacity:0.5};
+                        break;
+                    case ((att>40) && (att<=60)):
+                        return {color:'green',weight:0.5,fillColor:'green',fillOpacity:0.5};
+                        break;
+                    case ((att>60) && (att<=80)):
+                        return {color:'yellow',weight:0.5,fillColor:'yellow',fillOpacity:0.5};
+                        break
+                    case ((att>80) && (att<=100)):
+                        return {color:'orange',weight:0.5,fillColor:'orange',fillOpacity:0.5};
+                        break;
+                    default:
+                        return {color:'red',weight:0.5}
+                }
+            } 
+            
+            $("#btnInterDel").click(function(){
+                if(lyrInterPm){
+                    mymap.removeLayer(lyrInterPm);
+                    $("#legend1").hide();
+                }
+                if(lyrInterTemp){
+                    mymap.removeLayer(lyrInterTemp);
+                    $("#legend2").hide();
+                }
+                if(lyrInterHumd){
+                    mymap.removeLayer(lyrInterHumd);
+                    $("#legend3").hide();
+                }
+                if(lyrMask){
+                    mymap.removeLayer(lyrMask);
+                }
+            });
+                        
+            function styleMask(json) {
+                var att = json.properties.id;
+                return {color:'white', weight:2,fillColor:'white',fillOpacity:1};    
+            }
+
+                                 
+        </script>
+    </body>
+</html>
